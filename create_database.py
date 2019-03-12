@@ -14,12 +14,14 @@ query = """
     );
 """
 
+
 async def run_migration():
     pool = await aiopg.create_pool(dsn)
     async with pool.acquire() as conn:
         async with conn.cursor() as cursor:
             await cursor.execute(query)
             conn.commit()
+
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
