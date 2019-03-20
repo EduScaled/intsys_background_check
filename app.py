@@ -100,8 +100,9 @@ async def save_result(result):
 
 async def intsys_check():
     while True:
-        result = await process_intsys_check()
-        await save_result(result)
+        await asyncio.sleep(1000)
+        # result = await process_intsys_check()
+        # await save_result(result)
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
