@@ -45,9 +45,13 @@ class DPCheck:
                     filtered = [ elem for elem in elements if elem.get('uuid', None) == self.dp_competence_uuid ]
                     if len(filtered) == 1 and filtered[0].get("value", None):
                         dp_response_value = json.loads(filtered[0].get("value", None))
+                        """
                         if dp_response_value and \
                             str(dp_response_value.get("value", None)) == str(self.lrs_competence_value):
                                 return True
+                        """
+                        if dp_response_value and str(dp_response_value) == str(self.lrs_competence_value):
+                            return True
                         else:
                             return False
                     else:
