@@ -11,6 +11,8 @@ export DB_NAME=${DB_NAME:-"root"}
 export DB_USER=${DB_USER:-"root"}
 export DB_PASSWORD=${DB_PASSWORD:-"root"}
 
+python create_database.py
+
 echo starting
 
 exec "$@"
