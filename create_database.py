@@ -6,7 +6,7 @@ dsn = "host={} port={} dbname={} user={} password={}".format(
     settings.DB_HOST, settings.DB_PORT, settings.DB_NAME, settings.DB_USER, settings.DB_PASSWORD
 )
 
-query = """
+intsys_status_query = """
     DROP TABLE IF EXISTS intsys_status;
     CREATE TABLE intsys_status (
         id SERIAL,
@@ -14,12 +14,21 @@ query = """
     );
 """
 
+settings_query = """
+    DROP TABLE IF EXISTS settings;
+    CREATE TABLE settings (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(128) UNIQUE NOT NULL, 
+        value VARCHAR(256)
+    );
+"""
 
 async def run_migration():
     pool = await aiopg.create_pool(dsn)
     async with pool.acquire() as conn:
         async with conn.cursor() as cursor:
-            await cursor.execute(query)
+            await cursor.execute(intsys_status_query)
+            await cursor.execute(settings_query)
             conn.commit()
 
 
