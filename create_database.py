@@ -14,6 +14,22 @@ intsys_status_query = """
     );
 """
 
+carrier_status_query = """
+    DROP TABLE IF EXISTS carrier_status;
+    CREATE TABLE carrier_status (
+        id SERIAL PRIMARY KEY,
+        result VARCHAR(512) NOT NULL
+    );
+"""
+
+carrier_message_query = """
+    DROP TABLE IF EXISTS carrier_message;
+    CREATE TABLE carrier_message (
+        id SERIAL PRIMARY KEY,
+        message VARCHAR(512) NOT NULL
+    );
+"""
+
 settings_query = """
     DROP TABLE IF EXISTS settings;
     CREATE TABLE settings (
@@ -28,6 +44,8 @@ async def run_migration():
     async with pool.acquire() as conn:
         async with conn.cursor() as cursor:
             await cursor.execute(intsys_status_query)
+            await cursor.execute(carrier_status_query)
+            await cursor.execute(carrier_message_query)
             await cursor.execute(settings_query)
             conn.commit()
 
