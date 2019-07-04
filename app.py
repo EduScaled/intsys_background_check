@@ -11,6 +11,8 @@ import sentry_sdk
 from sentry_sdk import capture_exception
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
+from aiologger import Logger
+
 from checks.carrier import CarrierCheck
 from checks.dp import DPCheck
 from checks.fs import FSKafkaCheck, get_fs_messages, FSCheck
@@ -26,6 +28,9 @@ sentry_sdk.init(
 dsn = "host={} port={} dbname={} user={} password={}".format(
     settings.DB_HOST, settings.DB_PORT, settings.DB_NAME, settings.DB_USER, settings.DB_PASSWORD
 )
+
+
+logger = Logger.with_default_handlers()
 
 
 async def run_check(f: Callable, **kwargs):
@@ -120,15 +125,18 @@ async def check_is_enabled():
 
 
 async def intsys_check():
+    logger.info("Checking process started. Please do not forget to enable checks.")
     while True:
         if not await check_is_enabled():
             await asyncio.sleep(2)
             continue
+        logger.info("Checking in progress...")
         result = await process_intsys_check()
         await save_result(result, 'intsys_status')
         result = await process_carrier_check()
         await save_result(result, 'carrier_status')
 
+        logger.info("Checking sleeping 60s.")
         await asyncio.sleep(60)
 
 if __name__ == "__main__":

@@ -32,7 +32,6 @@ class CarrierCheck:
                 await cursor.execute(query)
                 conn.commit()
 
-
     async def check(self):
         headers = {'Authorization': f'{self.token}'}
         message = uuid.uuid4().hex

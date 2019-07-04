@@ -4,10 +4,13 @@ import json
 from json import JSONDecodeError
 from typing import List
 
+from aiologger import Logger
 from aiokafka import AIOKafkaConsumer, ConsumerRecord
 from kafka import TopicPartition
 
 from settings import settings
+
+logger = Logger.with_default_handlers()
 
 
 class Check:
@@ -44,6 +47,7 @@ async def _get_kafka_messages(topic: str, start: int) -> List[ConsumerRecord]:
         messages = []
         for tp in tps:
             messages += records.get(tp, [])
+        logger.info(f"Got kafka messages {messages} by key {topic}")
         return messages
     finally:
         # Will leave consumer group; perform autocommit if enabled.
