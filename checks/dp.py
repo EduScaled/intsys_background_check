@@ -1,6 +1,10 @@
 import json
+
 import aiohttp
 from urllib.parse import urljoin
+from aiologger import Logger
+
+logger = Logger.with_default_handlers()
 
 class DPCheck:
 
@@ -61,9 +65,12 @@ class DPCheck:
     
     
     async def check(self, create_entry):
+        logger.info("[DP] checking...")
         if create_entry.lower() != "true":
             result = await self.get_user_data()
+            logger.info(f"[DP] create_entry FALSE. Result: {result}")
         else:
             result = await self.set_user_data() and await self.get_user_data()
+            logger.info(f"[DP] create_entry TRUE. Result: {result}")
 
         return result  

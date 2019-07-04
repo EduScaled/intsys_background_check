@@ -3,6 +3,9 @@ from urllib.parse import urljoin
 import aiohttp
 
 from checks import _get_kafka_messages, Check
+from aiologger import Logger
+
+logger = Logger.with_default_handlers()
 
 
 async def get_fs_messages(start):
@@ -11,7 +14,11 @@ async def get_fs_messages(start):
 
 class FSKafkaCheck:
     async def check(self, fs_messages):
-        return any(fs_messages)
+        logger.info("[FS-Kafka] checking...")
+        logger.info(f"[FS-Kafka] messages: {fs_messages}")
+        result = any(fs_messages)
+        logger.info(f"[FS-Kafka] check: {result}")
+        return result
 
 
 class FSCheck:
@@ -28,14 +35,21 @@ class FSCheck:
             for message in fs_messages:
                 fact_id = message.value["id"]["fact"]["uuid"]
                 url = urljoin(self.server_url, f'/api/v1/facts/{fact_id}')
+                logger.info(f"[FS] trying to get facts: {url}")
                 async with session.get(url) as resp:
+                    logger.info(f"[FS] response: {resp.status }")
                     if resp.status == 200:
                         result.append(await resp.json())
         return result
 
     async def check(self, fs_messages):
+        logger.info("[FS] checking...")
         facts = await self._get_facts(fs_messages)
+        logger.info(f"[FS] got facts. {len(facts)}")
         for fact in facts:
-            if fact['type'] == 'lrs.culture.user.result' and fact['result'] == self.fact_result:
+            logger.info(f"[FS] Checking fact: {fact}")
+            if fact['type'] == 'lrs.game.culture' and fact['result'] == self.fact_result:
+                logger.info(f"[FS] Check TRUE")
                 return True
+        logger.info(f"[FS] Check FALSE")
         return False
