@@ -4,7 +4,11 @@ from urllib.parse import urljoin
 import aiohttp
 import aiopg
 
+from aiologger import Logger
 from settings import settings
+
+logger = Logger.with_default_handlers()
+
 
 class CarrierCheck:
     def __init__(self, server_url, token) -> None:
@@ -31,6 +35,7 @@ class CarrierCheck:
                 query = insert_query if len(await cursor.fetchall()) != 1 else update_query
                 await cursor.execute(query)
                 conn.commit()
+        logger.info(f"[Carrier] Write sent message to db.")
 
     async def check(self):
         headers = {'Authorization': f'{self.token}'}
@@ -42,7 +47,9 @@ class CarrierCheck:
                 "payload": str(message)
             }
             await self.write_sent_message_to_db(message)
+            logger.info(f"[Carrier] Trying to produce. Url: {url}")
             async with session.post(url, json=body) as resp:
+                logger.info(f"[Carrier] Producing result: {resp.status}")
                 if resp.status == 200:
                     return True
                 else:
