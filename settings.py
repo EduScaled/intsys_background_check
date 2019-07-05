@@ -26,8 +26,8 @@ class Settings:
     DB_USER = os.getenv('DB_USER')
     DB_PASSWORD = os.getenv('DB_PASSWORD')
 
-    CARRIER_SERVER_URL = os.getenv('CARRIER_SERVER_URL', 'https://carrier.qa.u2035s.ru')
-    CARRIER_SERVER_TOKEN = os.getenv('CARRIER_SERVER_TOKEN', 'secret_token')
+    CARRIER_SERVER_URL = 'https://carrier.qa.u2035s.ru'
+    CARRIER_SERVER_TOKEN = 'secret_token'
 
 
 settings = Settings()
