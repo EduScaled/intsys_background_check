@@ -29,4 +29,5 @@ class Settings:
     CARRIER_SERVER_URL = os.getenv('CARRIER_SERVER_URL', 'https://carrier.qa.u2035s.ru')
     CARRIER_SERVER_TOKEN = os.getenv('CARRIER_SERVER_TOKEN', 'secret_token')
 
+
 settings = Settings()
