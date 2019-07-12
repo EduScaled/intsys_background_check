@@ -1,12 +1,16 @@
 import asyncio
+from asyncio import ensure_future
 from urllib.parse import urljoin
 
 import aiohttp
 
+from aiologger import Logger
 from checks import _get_kafka_messages
+from utils import send_request
 
 loop = asyncio.get_event_loop()
 
+logger = Logger.with_default_handlers()
 
 async def create_lrs(server_url, auth, unti_id, culture_value):
     headers = {
@@ -51,10 +55,11 @@ async def create_lrs(server_url, auth, unti_id, culture_value):
         "version": "1.0.0"
     }
 
-    async with aiohttp.ClientSession(headers=headers) as session:
-        url = urljoin(server_url, '/data/xAPI/statements')
-        async with session.post(url, json=message) as response:
-            return await response.json(), response.status
+    url = urljoin(server_url, '/data/xAPI/statements')
+    response, status = await ensure_future(send_request(url, headers, message))
+
+    logger.info(f"LRS response: {response} {status}")
+    return response, status
 
 
 class LrsResponseCheck:
