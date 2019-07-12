@@ -1,8 +1,11 @@
 import json
+from asyncio import ensure_future
 
 import aiohttp
 from urllib.parse import urljoin
 from aiologger import Logger
+
+from utils import send_request
 
 logger = Logger.with_default_handlers()
 
@@ -23,21 +26,18 @@ class DPCheck:
         Необходим в случае неработоспособности элемнетов системы для создания записи
         """
 
-        async with aiohttp.ClientSession() as session:
-            url = urljoin(self.server_url, f'/api/v1/user_meta/{self.unti_id}?app_token={self.token}')
-            body = [{
-                "competence": self.dp_competence_uuid,
-                "value": self.lrs_competence_value 
-            }]
-            async with session.post(url, json=body) as resp:
-                if resp.status == 200:
-                    json = await resp.json()
-                    if json and json.get("status", None) == 0:
-                        return True
-                    else:
-                        return False
-                else:
-                    return False
+        url = urljoin(self.server_url, f'/api/v1/user_meta/{self.unti_id}?app_token={self.token}')
+        body = [{
+            "competence": self.dp_competence_uuid,
+            "value": self.lrs_competence_value
+        }]
+
+        response, status = await ensure_future(send_request(url, {}, body))
+        if status == 200:
+            if response and response.get("status", None) == 0:
+                return True
+        return False
+
 
 
     async def get_user_data(self):

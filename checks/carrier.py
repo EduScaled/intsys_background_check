@@ -1,4 +1,5 @@
 import uuid
+from asyncio import ensure_future
 from urllib.parse import urljoin
 
 import aiohttp
@@ -6,6 +7,7 @@ import aiopg
 
 from aiologger import Logger
 from settings import settings
+from utils import send_request
 
 logger = Logger.with_default_handlers()
 
@@ -40,17 +42,16 @@ class CarrierCheck:
     async def check(self):
         headers = {'Authorization': f'{self.token}'}
         message = uuid.uuid4().hex
-        async with aiohttp.ClientSession(headers=headers) as session:
-            url = urljoin(self.server_url, '/produce/')
-            body = {
-                "topic": self.topic,
-                "payload": str(message)
-            }
-            await self.write_sent_message_to_db(message)
-            logger.info(f"[Carrier] Trying to produce. Url: {url}")
-            async with session.post(url, json=body) as resp:
-                logger.info(f"[Carrier] Producing result: {resp.status}")
-                if resp.status == 200:
-                    return True
-                else:
-                    return False
+
+        url = urljoin(self.server_url, '/produce/')
+        body = {
+            "topic": self.topic,
+            "payload": str(message)
+        }
+        await self.write_sent_message_to_db(message)
+        logger.info(f"[Carrier] Trying to produce. Url: {url}")
+
+        response, status = await ensure_future(send_request(url, headers, body))
+        if status == 200:
+            return True
+        return False
