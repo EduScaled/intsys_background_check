@@ -22,10 +22,11 @@ class FSKafkaCheck:
 
 
 class FSCheck:
-    def __init__(self, server_url, token, fact_result) -> None:
+    def __init__(self, server_url, token, fact_type, fact_result) -> None:
         super().__init__()
         self.server_url = server_url
         self.token = token
+        self.fact_type = fact_type
         self.fact_result = fact_result
 
     async def _get_facts(self, fs_messages):
@@ -48,8 +49,15 @@ class FSCheck:
         logger.info(f"[FS] got facts. {len(facts)}")
         for fact in facts:
             logger.info(f"[FS] Checking fact: {fact}")
-            if fact['type'] == 'lrs.game.culture' and fact['result'] == self.fact_result:
-                logger.info(f"[FS] Check TRUE")
-                return True
+            if fact['type'] == self.fact_type:
+                if 'link' in fact['result']:
+                    if fact['result']["link"].split('/')[-1] == self.fact_result:
+                        logger.info(f"[FS] Link Check TRUE")
+                        return True
+                else:
+                    if fact['result'] == self.fact_result:
+                        logger.info(f"[FS] Whole res Check TRUE")
+                        return True
+
         logger.info(f"[FS] Check FALSE")
         return False

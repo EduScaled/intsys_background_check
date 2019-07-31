@@ -17,6 +17,7 @@ from checks.carrier import CarrierCheck
 from checks.dp import DPCheck
 from checks.fs import FSKafkaCheck, get_fs_messages, FSCheck
 from checks.lrs import LrsKafkaCheck, LrsResponseCheck, create_lrs
+from checks.uploads import UploadsResponseCheck, UploadsKafkaCheck, Uploader
 from settings import settings
 
 sentry_sdk.init(
@@ -29,7 +30,6 @@ dsn = "host={} port={} dbname={} user={} password={}".format(
     settings.DB_HOST, settings.DB_PORT, settings.DB_NAME, settings.DB_USER, settings.DB_PASSWORD
 )
 
-
 logger = Logger.with_default_handlers()
 
 
@@ -41,18 +41,14 @@ async def run_check(f: Callable, **kwargs):
         return False
 
 
-async def process_intsys_check():
-    
+async def process_culture_check():
     start = int(time.time() * 1000)
-    
-    lrs_culture_value = { settings.LRS_CULTURE_COMPETENCE: random.randint(200,300) }
-
+    lrs_culture_value = {settings.LRS_CULTURE_COMPETENCE: random.randint(200, 300)}
     lrs_response, lrs_response_status = await create_lrs(
-        settings.LRS_SERVER_URL, settings.LRS_AUTH, settings.UNTI_ID, lrs_culture_value
+        settings.LRS_SERVER_URL, settings.LRS_AUTH, settings.CULTURE_TEST_UNTI_ID, lrs_culture_value
     )
 
     await asyncio.sleep(5)
-
     fs_messages = await get_fs_messages(start)
 
     result = {
@@ -62,7 +58,7 @@ async def process_intsys_check():
         'lrs-kafka': await run_check(LrsKafkaCheck().check, start=start, lrs_response=lrs_response),
         'fs': await run_check(
             FSCheck(
-                settings.FS_SERVER_URL, settings.FS_SERVER_TOKEN, lrs_culture_value
+                settings.FS_SERVER_URL, settings.FS_SERVER_TOKEN, 'lrs.game.culture', lrs_culture_value
             ).check, fs_messages=fs_messages
         ),
         'fs-kafka': await run_check(FSKafkaCheck().check, fs_messages=fs_messages),
@@ -70,9 +66,9 @@ async def process_intsys_check():
             DPCheck(
                 settings.DP_SERVER_URL, 
                 settings.DP_SERVER_TOKEN, 
-                settings.UNTI_ID,
+                settings.CULTURE_TEST_UNTI_ID,
                 settings.DP_COMPETENCE_UUID,
-                lrs_culture_value
+                lrs_culture_value.get(list(lrs_culture_value.keys())[0])
             ).check,
             create_entry=settings.DP_CREATE_ENTRY
         )
@@ -80,8 +76,43 @@ async def process_intsys_check():
 
     status = 200 if all(result.values()) else 500
     result["status"] = status
-    result["created_at"] = str(datetime.datetime.utcnow()) 
+    result["created_at"] = str(datetime.datetime.utcnow())
+    return result
 
+
+async def process_uploads_check():
+    start = int(time.time() * 1000)
+    uploader = Uploader(settings.REMOTE_SELENIUM_HUB_URL, settings.UPLOADS_SERVER_URL,
+                        settings.UPLOADS_TEST_EVENT_UUID, settings.SSO_LOGIN, settings.SSO_PASSWORD)
+    uploads_result = uploader.upload_file(settings.UPLOADS_TEST_FILE_PATH)
+
+    await asyncio.sleep(3)
+    fs_messages = await get_fs_messages(start)
+
+    result = {
+        'uploads': await run_check(UploadsResponseCheck().check, uploads_result=uploads_result),
+        'uploads-kafka': await run_check(UploadsKafkaCheck().check, start=start),
+        'fs': await run_check(
+            FSCheck(
+                settings.FS_SERVER_URL, settings.FS_SERVER_TOKEN, 'uploads.event.personalresult', uploads_result
+            ).check, fs_messages=fs_messages
+        ),
+        'fs-kafka': await run_check(FSKafkaCheck().check, fs_messages=fs_messages),
+        'dp:': await run_check(
+            DPCheck(
+                settings.DP_SERVER_URL,
+                settings.DP_SERVER_TOKEN,
+                settings.UPLOADS_TEST_UNTI_ID,
+                settings.DP_COMPETENCE_UUID,
+                uploads_result
+            ).check,
+            create_entry=settings.DP_CREATE_ENTRY
+        )
+    }
+
+    status = 200 if all(result.values()) else 500
+    result["status"] = status
+    result["created_at"] = str(datetime.datetime.utcnow())
     return result
 
 
@@ -131,8 +162,10 @@ async def intsys_check():
             await asyncio.sleep(2)
             continue
         logger.info("Checking in progress...")
-        result = await process_intsys_check()
-        await save_result(result, 'intsys_status')
+        # culture_result = await process_culture_check()
+        # await save_result(culture_result, 'intsys_culture_status')
+        uploads_result = await process_uploads_check()
+        await save_result(uploads_result, 'intsys_uploads_status')
         result = await process_carrier_check()
         await save_result(result, 'carrier_status')
 

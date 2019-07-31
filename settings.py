@@ -5,7 +5,7 @@ class Settings:
     SENTRY_DSN = os.getenv('SENTRY_DSN')
     SENTRY_ENVIRONMENT = os.getenv('SENTRY_ENVIRONMENT')
 
-    UNTI_ID = os.getenv('UNTI_ID')
+    CULTURE_TEST_UNTI_ID = os.getenv('UNTI_ID')
     LRS_SERVER_URL = os.getenv('LRS_SERVER_URL')
     LRS_AUTH = os.getenv('LRS_AUTH')
     LRS_CULTURE_COMPETENCE = os.getenv('LRS_CULTURE_COMPETENCE')
@@ -19,6 +19,16 @@ class Settings:
     DP_SERVER_TOKEN = os.getenv('DP_SERVER_TOKEN')
     DP_COMPETENCE_UUID = os.getenv('DP_COMPETENCE_UUID')
     DP_CREATE_ENTRY = os.getenv('DP_CREATE_ENTRY')
+
+    REMOTE_SELENIUM_HUB_URL = os.getenv('REMOTE_SELENIUM_HUB_URL', "http://selenoid-ui.2035.university/wd/hub")
+    UPLOADS_SERVER_URL = os.getenv('UPLOADS_SERVER_URL', "https://uploads.u2035test.ru/")
+    UPLOADS_TEST_EVENT_UUID = os.getenv('UPLOADS_TEST_EVENT_UUID', "c96c5f53-beb2-41c2-aeb9-80aa766102da")
+    UPLOADS_TEST_FILE_PATH = os.getenv('UPLOADS_TEST_FILE_PATH', os.path.join(os.getcwd(), "checks", "test_data", "test.txt"))
+    UPLOADS_TEST_UNTI_ID = os.getenv('UPLOADS_TEST_UNTI_ID', 1002)
+    UPLOADS_DELETE_TEST_FILE_TIMEOUT = os.getenv('UPLOADS_DELETE_TEST_FILE_TIMEOUT', 15)
+
+    SSO_LOGIN = os.getenv('SSO_LOGIN', 'minion2+opreeb@yandex.ru')
+    SSO_PASSWORD = os.getenv('SSO_PASSWORD', 'minion2^^')
 
     DB_HOST = os.getenv('DB_HOST')
     DB_PORT = os.getenv('DB_PORT')
