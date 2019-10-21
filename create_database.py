@@ -1,5 +1,7 @@
 import aiopg
 import asyncio
+
+from clean_up import get_default_clean_up_settings_dict
 from settings import settings
 
 dsn = "host={} port={} dbname={} user={} password={}".format(
@@ -39,6 +41,26 @@ settings_query = """
     );
 """
 
+
+def get_default_settings_insert_query():
+    result_queries = []
+    default_settings = get_default_clean_up_settings_dict()
+
+    template_query = """
+        INSERT INTO settings (name, value)
+        VALUES ('{parameter_name}', '{value}')
+        ON CONFLICT (name)
+        DO UPDATE SET
+        value='{value}';
+        """
+
+    for parameter_name, value in default_settings.items():
+        query = template_query.format(parameter_name=parameter_name, value=value)
+        result_queries.append(query)
+
+    return "\n".join(result_queries)
+
+
 async def run_migration():
     pool = await aiopg.create_pool(dsn)
     async with pool.acquire() as conn:
@@ -47,6 +69,7 @@ async def run_migration():
             await cursor.execute(carrier_status_query)
             await cursor.execute(carrier_message_query)
             await cursor.execute(settings_query)
+            # await cursor.execute(get_default_settings_insert_query())
             conn.commit()
 
 
