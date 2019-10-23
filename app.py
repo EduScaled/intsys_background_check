@@ -17,6 +17,7 @@ from checks.carrier import CarrierCheck
 from checks.dp import DPCheck
 from checks.fs import FSKafkaCheck, get_fs_messages, FSCheck
 from checks.lrs import LrsKafkaCheck, LrsResponseCheck, create_lrs
+from clean_up import clean_up_services, get_clean_up_settings
 from settings import settings
 
 sentry_sdk.init(
@@ -124,6 +125,26 @@ async def check_is_enabled():
             return False
 
 
+async def intsys_clean_up():
+    while True:
+        if not await check_is_enabled():
+            await asyncio.sleep(2)
+            continue
+
+        cleanup_settings = await get_clean_up_settings()
+        if not cleanup_settings:
+            logger.info(f"(!) Not enough settings to clean up... Sleeping 60s.")
+            await asyncio.sleep(60)
+            continue
+
+        logger.info("Cleaning up in progress...")
+        await clean_up_services(cleanup_settings)
+
+        clean_up_interval = int(cleanup_settings['clean_up_interval'])
+        logger.info(f"Cleaning up sleeping {clean_up_interval}s.")
+        await asyncio.sleep(clean_up_interval)
+
+
 async def intsys_check():
     logger.info("Checking process started. Please do not forget to enable checks.")
     while True:
@@ -142,4 +163,5 @@ async def intsys_check():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.create_task(intsys_check())
+    loop.create_task(intsys_clean_up())
     loop.run_forever()
